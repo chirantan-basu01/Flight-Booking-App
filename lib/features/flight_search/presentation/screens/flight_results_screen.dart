@@ -109,9 +109,11 @@ class FlightResultsScreen extends ConsumerWidget {
                   },
                   color: AppColors.primaryBlue,
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                    padding: EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: 8,
+                      bottom: MediaQuery.of(context).padding.bottom + 80,
                     ),
                     itemCount: flights.length,
                     itemBuilder: (context, index) {
@@ -158,6 +160,7 @@ class FlightResultsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const FilterBottomSheet(),
     );

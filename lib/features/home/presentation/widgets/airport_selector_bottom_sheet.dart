@@ -176,7 +176,11 @@ class _AirportSelectorBottomSheetState
 
                 return ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: MediaQuery.of(context).padding.bottom + 20,
+                  ),
                   itemCount: airports.length + (paginatedState.hasMore ? 1 : 0),
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,

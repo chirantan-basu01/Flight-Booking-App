@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/providers/flight_details_providers.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/widgets/boarding_pass_card.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/widgets/passengers_info_section.dart';
+import 'package:flight_booking_app/features/flight_details/presentation/widgets/boarding_pass_export.dart';
 import 'package:flight_booking_app/shared/widgets/shimmer_loading.dart';
 
 class FlightDetailsScreen extends ConsumerWidget {
@@ -74,28 +76,39 @@ class FlightDetailsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Boarding Pass Card
-              if (data.flightDetails != null)
-                BoardingPassCard(flightDetails: data.flightDetails!),
+              // Wrap boarding pass content with Screenshot widget
+              Screenshot(
+                controller: BoardingPassExport.controller,
+                child: Container(
+                  color: AppColors.lightBlue,
+                  child: Column(
+                    children: [
+                      // Boarding Pass Card
+                      if (data.flightDetails != null)
+                        BoardingPassCard(flightDetails: data.flightDetails!),
 
-              const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-              // Passengers Info Section with Barcode
-              if (data.passengers != null)
-                PassengersInfoSection(
-                  passengers: data.passengers!,
-                  bookingInfo: data.bookingInfo,
+                      // Passengers Info Section with Barcode
+                      if (data.passengers != null)
+                        PassengersInfoSection(
+                          passengers: data.passengers!,
+                          bookingInfo: data.bookingInfo,
+                        ),
+                    ],
+                  ),
                 ),
+              ),
 
               const SizedBox(height: 120), // Space for FAB
             ],
           ),
         ),
-        loading: () => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+        loading: () => const SingleChildScrollView(
+          padding: EdgeInsets.symmetric(vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               // Boarding Pass Shimmer
               BoardingPassShimmer(),
               SizedBox(height: 24),
@@ -148,13 +161,50 @@ class FlightDetailsScreen extends ConsumerWidget {
           width: double.infinity,
           height: 56,
           child: FloatingActionButton.extended(
-            onPressed: () {
+            onPressed: () async {
+              // Show loading indicator
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Boarding pass saved!'),
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Text('Saving boarding pass...'),
+                    ],
+                  ),
+                  duration: Duration(seconds: 1),
                   backgroundColor: AppColors.primaryBlue,
                 ),
               );
+
+              // Save to gallery
+              final path = await BoardingPassExport.saveToGallery(context);
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                if (path != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Boarding pass saved to gallery!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to save boarding pass'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             backgroundColor: AppColors.black,
             foregroundColor: AppColors.white,

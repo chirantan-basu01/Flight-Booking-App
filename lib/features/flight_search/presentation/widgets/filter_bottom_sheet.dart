@@ -274,6 +274,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AirlineSelectorSheet(
         onSelected: (airline) {
@@ -288,6 +289,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AircraftTypeSelectorSheet(
         onSelected: (aircraftType) {
@@ -366,7 +368,11 @@ class _AirlineSelectorSheet extends ConsumerWidget {
                 final items = [null, ...airlines.map((a) => a.airline).where((a) => a != null && a.isNotEmpty)];
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: MediaQuery.of(context).padding.bottom + 20,
+                  ),
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderGray),
                   itemBuilder: (context, index) {
@@ -512,7 +518,11 @@ class _AircraftTypeSelectorSheet extends ConsumerWidget {
                 final items = [null, ...aircraftTypes.map((a) => a.aircraft).where((a) => a != null && a.isNotEmpty)];
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: MediaQuery.of(context).padding.bottom + 20,
+                  ),
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderGray),
                   itemBuilder: (context, index) {

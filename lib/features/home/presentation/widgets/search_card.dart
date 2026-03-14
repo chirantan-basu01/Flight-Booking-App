@@ -321,6 +321,7 @@ class SearchCard extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AirportSelectorBottomSheet(
         isDeparture: isDeparture,
@@ -371,6 +372,7 @@ class SearchCard extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -388,7 +390,12 @@ class _PassengerSelectorSheet extends ConsumerWidget {
     final countNotifier = ref.read(passengerSelectorCountProvider.notifier);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.only(
+        top: 24,
+        left: 24,
+        right: 24,
+        bottom: MediaQuery.of(context).padding.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -1,4 +1,5 @@
 import 'package:flight_booking_app/core/network/dio_provider.dart';
+import 'package:flight_booking_app/core/utils/date_formatter.dart';
 import 'package:flight_booking_app/features/flight_search/data/datasources/flight_search_remote_datasource.dart';
 import 'package:flight_booking_app/features/flight_search/data/datasources/flight_search_mock_datasource.dart';
 import 'package:flight_booking_app/features/flight_search/data/repositories/flight_search_repository_impl.dart';
@@ -152,6 +153,9 @@ Future<List<FlightModel>> flightSearchResults(
   final params = SearchParamsModel(
     from: searchState.fromAirport?.airportCode,
     to: searchState.toAirport?.airportCode,
+    date: searchState.departureDate != null
+        ? DateFormatter.toApiFormat(searchState.departureDate!)
+        : null,
     passengers: searchState.passengers,
     sortBy: sortBy,
     filters: filters,
