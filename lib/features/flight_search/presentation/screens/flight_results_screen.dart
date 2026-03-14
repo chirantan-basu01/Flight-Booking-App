@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/providers/flight_search_providers.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/flight_card.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/filter_chips.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/filter_bottom_sheet.dart';
+import 'package:flight_booking_app/shared/widgets/shimmer_loading.dart';
+import 'package:flight_booking_app/shared/widgets/animated_press_button.dart';
 import 'package:flight_booking_app/routes/app_router.dart';
 
 class FlightResultsScreen extends ConsumerWidget {
@@ -115,11 +116,14 @@ class FlightResultsScreen extends ConsumerWidget {
                     itemCount: flights.length,
                     itemBuilder: (context, index) {
                       final flight = flights[index];
-                      return FlightCard(
-                        flight: flight,
-                        onSelect: () {
-                          FlightDetailsRoute(flightId: flight.id ?? 0).go(context);
-                        },
+                      return FadeInListItem(
+                        index: index,
+                        child: FlightCard(
+                          flight: flight,
+                          onSelect: () {
+                            FlightDetailsRoute(flightId: flight.id ?? 0).push(context);
+                          },
+                        ),
                       );
                     },
                   ),
@@ -160,24 +164,7 @@ class FlightResultsScreen extends ConsumerWidget {
   }
 
   Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        );
-      },
-    );
+    return const FlightListShimmer(itemCount: 5);
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {

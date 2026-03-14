@@ -7,6 +7,41 @@ import 'package:flight_booking_app/features/flight_details/presentation/screens/
 
 part 'app_router.g.dart';
 
+// Custom page transition
+CustomTransitionPage<T> buildPageWithSlideTransition<T>({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // Slide from right with fade
+      const begin = Offset(1.0, 0.0);
+      const end = Offset.zero;
+      const curve = Curves.easeInOutCubic;
+
+      var slideTween = Tween(begin: begin, end: end).chain(
+        CurveTween(curve: curve),
+      );
+      var fadeTween = Tween(begin: 0.0, end: 1.0).chain(
+        CurveTween(curve: curve),
+      );
+
+      return SlideTransition(
+        position: animation.drive(slideTween),
+        child: FadeTransition(
+          opacity: animation.drive(fadeTween),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 // Route paths
 abstract class AppRoutes {
   static const String home = '/';
@@ -42,8 +77,12 @@ class FlightResultsRoute extends GoRouteData {
   const FlightResultsRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const FlightResultsScreen();
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return buildPageWithSlideTransition(
+      context: context,
+      state: state,
+      child: const FlightResultsScreen(),
+    );
   }
 }
 
@@ -54,8 +93,12 @@ class FlightDetailsRoute extends GoRouteData {
   final int flightId;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return FlightDetailsScreen(flightId: flightId);
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return buildPageWithSlideTransition(
+      context: context,
+      state: state,
+      child: FlightDetailsScreen(flightId: flightId),
+    );
   }
 }
 

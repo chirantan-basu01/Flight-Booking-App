@@ -5,6 +5,7 @@ import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/providers/flight_details_providers.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/widgets/boarding_pass_card.dart';
 import 'package:flight_booking_app/features/flight_details/presentation/widgets/passengers_info_section.dart';
+import 'package:flight_booking_app/shared/widgets/shimmer_loading.dart';
 
 class FlightDetailsScreen extends ConsumerWidget {
   final int flightId;
@@ -90,9 +91,19 @@ class FlightDetailsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primaryBlue,
+        loading: () => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              // Boarding Pass Shimmer
+              BoardingPassShimmer(),
+              SizedBox(height: 24),
+              // Passenger Cards Shimmer
+              PassengerCardShimmer(),
+              PassengerCardShimmer(),
+              SizedBox(height: 80),
+            ],
           ),
         ),
         error: (error, stackTrace) => Center(
