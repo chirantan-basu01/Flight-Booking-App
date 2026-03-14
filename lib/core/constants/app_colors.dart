@@ -19,7 +19,12 @@ class AppColors {
 
   // Background Gradient
   static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFFE8F1FF), Color(0xFFFFFFFF)],
+    colors: [
+      Color(0xFFE8F1FF),  // Light blue at top
+      Color(0xFFF0F4FF),  // Slightly lighter blue in middle
+      Color(0xFFF5F7FF),  // Very light blue/lavender at bottom
+    ],
+    stops: [0.0, 0.5, 1.0],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
