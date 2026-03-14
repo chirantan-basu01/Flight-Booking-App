@@ -4,12 +4,34 @@ import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/home/presentation/widgets/search_card.dart';
 import 'package:flight_booking_app/features/home/presentation/widgets/saved_trip_card.dart';
+import 'package:flight_booking_app/features/home/presentation/providers/home_providers.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Prefetch airports data for offline availability after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prefetchAirports();
+    });
+  }
+
+  void _prefetchAirports() {
+    // Trigger airport data fetch in background to populate cache
+    // These will be available offline once fetched
+    ref.read(paginatedDepartureAirportsProvider(search: null).future);
+    ref.read(paginatedArrivalAirportsProvider(search: null).future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
