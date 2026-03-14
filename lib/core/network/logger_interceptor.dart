@@ -34,8 +34,15 @@ class LoggerInterceptor extends Interceptor {
       debugPrint('┌───────────────────────────────────────────────────────');
       debugPrint('│ ERROR: ${err.type} ${err.requestOptions.uri}');
       debugPrint('│ Message: ${err.message}');
+      if (err.error != null) {
+        debugPrint('│ Error: ${err.error}');
+        debugPrint('│ Error Type: ${err.error.runtimeType}');
+      }
       if (err.response?.data != null) {
         debugPrint('│ Response: ${err.response?.data}');
+      }
+      if (err.stackTrace != null) {
+        debugPrint('│ StackTrace: ${err.stackTrace.toString().split('\n').take(5).join('\n')}');
       }
       debugPrint('└───────────────────────────────────────────────────────');
     }
