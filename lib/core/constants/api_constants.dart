@@ -20,7 +20,6 @@ class ApiConstants {
 
   // API Endpoints
   static const String search = '/search';
-  static const String list = '/list';
   static const String flight = '/flight';
   static const String airportsFrom = '/airports/from';
   static const String airportsTo = '/airports/to';

@@ -6,16 +6,44 @@ import 'package:flight_booking_app/features/flight_search/presentation/providers
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/flight_card.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/filter_chips.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/widgets/filter_bottom_sheet.dart';
+import 'package:flight_booking_app/features/flight_search/presentation/widgets/active_filter_chips.dart';
 import 'package:flight_booking_app/shared/widgets/shimmer_loading.dart';
 import 'package:flight_booking_app/shared/widgets/animated_press_button.dart';
 import 'package:flight_booking_app/routes/app_router.dart';
 
-class FlightResultsScreen extends ConsumerWidget {
+class FlightResultsScreen extends ConsumerStatefulWidget {
   const FlightResultsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final flightResults = ref.watch(flightSearchResultsProvider);
+  ConsumerState<FlightResultsScreen> createState() => _FlightResultsScreenState();
+}
+
+class _FlightResultsScreenState extends ConsumerState<FlightResultsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedFlightSearchProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final paginatedFlights = ref.watch(paginatedFlightSearchProvider);
 
     return Container(
       decoration: const BoxDecoration(
@@ -91,32 +119,42 @@ class FlightResultsScreen extends ConsumerWidget {
           // Filter Chips
           Container(
             color: Colors.transparent,
-            padding: const EdgeInsets.only(top: 16, bottom: 16),
+            padding: const EdgeInsets.only(top: 16, bottom: 8),
             child: const FilterChips(),
           ),
 
+          // Active Filter Chips
+          const ActiveFilterChips(),
+
           // Flight List
           Expanded(
-            child: flightResults.when(
-              data: (flights) {
+            child: paginatedFlights.when(
+              data: (paginatedState) {
+                final flights = paginatedState.flights;
                 if (flights.isEmpty) {
-                  return _buildEmptyState(context, ref);
+                  return _buildEmptyState(context);
                 }
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(flightSearchResultsProvider);
+                    ref.invalidate(paginatedFlightSearchProvider);
                   },
                   color: AppColors.primaryBlue,
                   child: ListView.builder(
+                    controller: _scrollController,
                     padding: EdgeInsets.only(
                       left: 20,
                       right: 20,
                       top: 8,
                       bottom: MediaQuery.of(context).padding.bottom + 80,
                     ),
-                    itemCount: flights.length,
+                    itemCount: flights.length + (paginatedState.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      // Show loading indicator at the bottom
+                      if (index >= flights.length) {
+                        return _buildLoadMoreIndicator(paginatedState.isLoadingMore);
+                      }
+
                       final flight = flights[index];
                       return FadeInListItem(
                         index: index,
@@ -134,7 +172,6 @@ class FlightResultsScreen extends ConsumerWidget {
               loading: () => _buildLoadingState(),
               error: (error, stack) => _buildErrorState(
                 context,
-                ref,
                 error.toString(),
               ),
             ),
@@ -170,7 +207,14 @@ class FlightResultsScreen extends ConsumerWidget {
     return const FlightListShimmer(itemCount: 5);
   }
 
-  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
+  Widget _buildLoadMoreIndicator(bool isLoading) {
+    if (isLoading) {
+      return const FlightCardShimmer();
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -198,7 +242,7 @@ class FlightResultsScreen extends ConsumerWidget {
           TextButton.icon(
             onPressed: () {
               ref.read(flightFilterStateProvider.notifier).clearFilters();
-              ref.invalidate(flightSearchResultsProvider);
+              ref.invalidate(paginatedFlightSearchProvider);
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Clear filters'),
@@ -213,7 +257,6 @@ class FlightResultsScreen extends ConsumerWidget {
 
   Widget _buildErrorState(
     BuildContext context,
-    WidgetRef ref,
     String error,
   ) {
     return Center(
@@ -245,7 +288,7 @@ class FlightResultsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                ref.invalidate(flightSearchResultsProvider);
+                ref.invalidate(paginatedFlightSearchProvider);
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),

@@ -140,34 +140,134 @@ class FilterBottomSheetData {
       priceMax < 1000;
 }
 
-/// Search flights based on search state, sort, and filters
+/// Paginated flight search state
+class PaginatedFlightsState {
+  final List<FlightModel> flights;
+  final int currentPage;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final String? error;
+
+  const PaginatedFlightsState({
+    this.flights = const [],
+    this.currentPage = 1,
+    this.hasMore = true,
+    this.isLoadingMore = false,
+    this.error,
+  });
+
+  PaginatedFlightsState copyWith({
+    List<FlightModel>? flights,
+    int? currentPage,
+    bool? hasMore,
+    bool? isLoadingMore,
+    String? error,
+  }) {
+    return PaginatedFlightsState(
+      flights: flights ?? this.flights,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      error: error,
+    );
+  }
+}
+
+/// Paginated flight search provider with infinite scroll support
+@riverpod
+class PaginatedFlightSearch extends _$PaginatedFlightSearch {
+  static const int _pageSize = 20;
+
+  @override
+  Future<PaginatedFlightsState> build() async {
+    final searchState = ref.watch(searchStateNotifierProvider);
+    final sortBy = ref.watch(flightSortStateProvider);
+    final filters = ref.watch(flightFilterStateProvider);
+
+    // Build search params
+    final params = SearchParamsModel(
+      from: searchState.fromAirport?.airportCode,
+      to: searchState.toAirport?.airportCode,
+      date: searchState.departureDate != null
+          ? DateFormatter.toApiFormat(searchState.departureDate!)
+          : null,
+      passengers: searchState.passengers,
+      sortBy: sortBy,
+      filters: filters,
+      page: 1,
+      limit: _pageSize,
+    );
+
+    final repository = ref.watch(flightSearchRepositoryProvider);
+    final result = await repository.searchFlights(params);
+
+    return result.fold(
+      (failure) => throw Exception(failure.localizedMessage),
+      (response) => PaginatedFlightsState(
+        flights: response.flights ?? [],
+        currentPage: 1,
+        hasMore: response.pagination?.hasNextPage ?? false,
+      ),
+    );
+  }
+
+  /// Load more flights for infinite scroll
+  Future<void> loadMore() async {
+    final currentState = state.valueOrNull;
+    if (currentState == null || currentState.isLoadingMore || !currentState.hasMore) {
+      return;
+    }
+
+    // Set loading state
+    state = AsyncData(currentState.copyWith(isLoadingMore: true));
+
+    final searchState = ref.read(searchStateNotifierProvider);
+    final sortBy = ref.read(flightSortStateProvider);
+    final filters = ref.read(flightFilterStateProvider);
+
+    final nextPage = currentState.currentPage + 1;
+
+    final params = SearchParamsModel(
+      from: searchState.fromAirport?.airportCode,
+      to: searchState.toAirport?.airportCode,
+      date: searchState.departureDate != null
+          ? DateFormatter.toApiFormat(searchState.departureDate!)
+          : null,
+      passengers: searchState.passengers,
+      sortBy: sortBy,
+      filters: filters,
+      page: nextPage,
+      limit: _pageSize,
+    );
+
+    final repository = ref.read(flightSearchRepositoryProvider);
+    final result = await repository.searchFlights(params);
+
+    result.fold(
+      (failure) {
+        state = AsyncData(currentState.copyWith(
+          isLoadingMore: false,
+          error: failure.localizedMessage,
+        ));
+      },
+      (response) {
+        final newFlights = response.flights ?? [];
+        state = AsyncData(PaginatedFlightsState(
+          flights: [...currentState.flights, ...newFlights],
+          currentPage: nextPage,
+          hasMore: response.pagination?.hasNextPage ?? false,
+          isLoadingMore: false,
+        ));
+      },
+    );
+  }
+}
+
+/// Legacy provider for backward compatibility
 @riverpod
 Future<List<FlightModel>> flightSearchResults(
   FlightSearchResultsRef ref,
 ) async {
-  final searchState = ref.watch(searchStateNotifierProvider);
-  final sortBy = ref.watch(flightSortStateProvider);
-  final filters = ref.watch(flightFilterStateProvider);
-
-  // Build search params from search state
-  final params = SearchParamsModel(
-    from: searchState.fromAirport?.airportCode,
-    to: searchState.toAirport?.airportCode,
-    date: searchState.departureDate != null
-        ? DateFormatter.toApiFormat(searchState.departureDate!)
-        : null,
-    passengers: searchState.passengers,
-    sortBy: sortBy,
-    filters: filters,
-    page: 1,
-    limit: 20,
-  );
-
-  final repository = ref.watch(flightSearchRepositoryProvider);
-  final result = await repository.searchFlights(params);
-
-  return result.fold(
-    (failure) => throw Exception(failure.localizedMessage),
-    (response) => response.flights ?? [],
-  );
+  final paginatedState = await ref.watch(paginatedFlightSearchProvider.future);
+  return paginatedState.flights;
 }
