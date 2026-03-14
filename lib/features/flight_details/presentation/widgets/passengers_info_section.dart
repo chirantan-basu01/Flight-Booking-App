@@ -185,33 +185,39 @@ class PassengersInfoSection extends StatelessWidget {
 
   Widget _buildBarcode() {
     if (bookingInfo?.barcode != null && bookingInfo!.barcode!.isNotEmpty) {
+      // API SVG has viewBox 300x150, bars from y=20 to y=110, text below
+      // Clip to show only the barcode bars (no text)
       return Center(
         child: SizedBox(
-          width: 200,
-          height: 50,
-          child: SvgPicture.string(
-            bookingInfo!.barcode!,
-            fit: BoxFit.contain,
+          width: double.infinity,
+          height: 70,
+          child: ClipRect(
+            child: OverflowBox(
+              maxHeight: 150,
+              alignment: Alignment.topCenter,
+              child: SvgPicture.string(
+                bookingInfo!.barcode!,
+                fit: BoxFit.fitWidth,
+                width: double.infinity,
+              ),
+            ),
           ),
         ),
       );
     }
 
-    // Fallback barcode pattern - realistic looking barcode
+    // Fallback barcode pattern
     return Center(
       child: SizedBox(
-        width: 200,
-        height: 50,
+        width: double.infinity,
+        height: 70,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: _generateBarcodePattern().asMap().entries.map((entry) {
-            final index = entry.key;
-            final width = entry.value;
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _generateBarcodePattern().map((width) {
             return Container(
               width: width,
-              height: 45,
-              color: index % 2 == 0 ? AppColors.black : Colors.transparent,
+              color: width > 0 ? AppColors.black : Colors.transparent,
             );
           }).toList(),
         ),
@@ -220,20 +226,14 @@ class PassengersInfoSection extends StatelessWidget {
   }
 
   List<double> _generateBarcodePattern() {
-    // Generate a realistic barcode pattern with varying widths
+    // Generate a realistic barcode pattern with varying bar widths and gaps
     final List<double> pattern = [];
-    final List<double> widths = [1.0, 1.5, 2.0, 2.5, 3.0, 1.0, 2.0, 1.5];
+    final List<double> barWidths = [2.0, 1.0, 3.0, 1.5, 2.5, 1.0, 2.0, 1.5, 3.0, 1.0];
 
-    // Start bars
-    pattern.addAll([2.0, 1.0, 2.0, 1.0]);
-
-    // Middle section - varied pattern
-    for (int i = 0; i < 35; i++) {
-      pattern.add(widths[i % widths.length]);
+    for (int i = 0; i < 25; i++) {
+      pattern.add(barWidths[i % barWidths.length]); // Black bar
+      pattern.add(0); // Gap (transparent)
     }
-
-    // End bars
-    pattern.addAll([1.0, 2.0, 1.0, 2.0]);
 
     return pattern;
   }
