@@ -186,11 +186,13 @@ class PassengersInfoSection extends StatelessWidget {
   Widget _buildBarcode() {
     if (bookingInfo?.barcode != null && bookingInfo!.barcode!.isNotEmpty) {
       return Center(
-        child: SvgPicture.string(
-          bookingInfo!.barcode!,
-          fit: BoxFit.fitWidth,
-          width: double.infinity,
-          height: 60,
+        child: SizedBox(
+          width: 200,
+          height: 50,
+          child: SvgPicture.string(
+            bookingInfo!.barcode!,
+            fit: BoxFit.contain,
+          ),
         ),
       );
     }
@@ -198,7 +200,8 @@ class PassengersInfoSection extends StatelessWidget {
     // Fallback barcode pattern - realistic looking barcode
     return Center(
       child: SizedBox(
-        height: 60,
+        width: 200,
+        height: 50,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,7 +210,7 @@ class PassengersInfoSection extends StatelessWidget {
             final width = entry.value;
             return Container(
               width: width,
-              height: 55,
+              height: 45,
               color: index % 2 == 0 ? AppColors.black : Colors.transparent,
             );
           }).toList(),

@@ -4,6 +4,8 @@ import 'package:flight_booking_app/features/home/data/datasources/home_remote_da
 import 'package:flight_booking_app/features/home/data/datasources/home_mock_datasource.dart';
 import 'package:flight_booking_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:flight_booking_app/features/home/domain/models/airport_model.dart';
+import 'package:flight_booking_app/features/home/domain/models/airline_model.dart';
+import 'package:flight_booking_app/features/home/domain/models/aircraft_type_model.dart';
 import 'package:flight_booking_app/features/home/domain/repositories/home_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -49,6 +51,28 @@ Future<List<AirportModel>> arrivalAirports(
   return result.fold(
     (failure) => throw Exception(failure.localizedMessage),
     (airports) => airports,
+  );
+}
+
+/// Airlines list provider
+@riverpod
+Future<List<AirlineModel>> airlines(AirlinesRef ref) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  final result = await repository.getAirlines(limit: 50);
+  return result.fold(
+    (failure) => throw Exception(failure.localizedMessage),
+    (airlines) => airlines,
+  );
+}
+
+/// Aircraft types list provider
+@riverpod
+Future<List<AircraftTypeModel>> aircraftTypes(AircraftTypesRef ref) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  final result = await repository.getAircraftTypes(limit: 50);
+  return result.fold(
+    (failure) => throw Exception(failure.localizedMessage),
+    (aircraftTypes) => aircraftTypes,
   );
 }
 

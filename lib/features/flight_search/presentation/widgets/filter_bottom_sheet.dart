@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/flight_search/domain/models/filter_model.dart';
 import 'package:flight_booking_app/features/flight_search/presentation/providers/flight_search_providers.dart';
+import 'package:flight_booking_app/features/home/presentation/providers/home_providers.dart';
 
 class FilterBottomSheet extends ConsumerStatefulWidget {
   const FilterBottomSheet({super.key});
@@ -13,27 +15,6 @@ class FilterBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
-  final List<String> _airlines = [
-    'All Airlines',
-    'Garuda Indonesia',
-    'Singapore Airlines',
-    'AirAsia',
-    'Japan Airlines',
-    'Citilink',
-    'Lion Air',
-    'Thai Airways',
-    'Malaysia Airlines',
-  ];
-
-  final List<String> _aircraftTypes = [
-    'All Aircraft',
-    'Boeing 737',
-    'Boeing 777',
-    'Boeing 787',
-    'Airbus A320',
-    'Airbus A350',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -106,12 +87,9 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   // Airline Filter
                   _buildSectionTitle('Airline'),
                   const SizedBox(height: 12),
-                  _buildDropdown(
+                  _buildSelectorButton(
                     value: filterState.selectedAirline ?? 'All Airlines',
-                    items: _airlines,
-                    onChanged: (value) {
-                      filterNotifier.setAirline(value == 'All Airlines' ? null : value);
-                    },
+                    onTap: () => _showAirlineSelector(filterNotifier),
                   ),
 
                   const SizedBox(height: 24),
@@ -166,12 +144,9 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   // Aircraft Type Filter
                   _buildSectionTitle('Aircraft Type'),
                   const SizedBox(height: 12),
-                  _buildDropdown(
+                  _buildSelectorButton(
                     value: filterState.selectedAircraftType ?? 'All Aircraft',
-                    items: _aircraftTypes,
-                    onChanged: (value) {
-                      filterNotifier.setAircraftType(value == 'All Aircraft' ? null : value);
-                    },
+                    onTap: () => _showAircraftTypeSelector(filterNotifier),
                   ),
                 ],
               ),
@@ -231,32 +206,31 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
-  Widget _buildDropdown({
+  Widget _buildSelectorButton({
     required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          items: items.map((item) {
-            return DropdownMenuItem(
-              value: item,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.lightGray,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
               child: Text(
-                item,
+                value,
                 style: AppTypography.body.copyWith(color: AppColors.black),
               ),
-            );
-          }).toList(),
-          onChanged: onChanged,
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.mediumGray,
+            ),
+          ],
         ),
       ),
     );
@@ -296,6 +270,34 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
+  void _showAirlineSelector(FilterBottomSheetState filterNotifier) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AirlineSelectorSheet(
+        onSelected: (airline) {
+          filterNotifier.setAirline(airline);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showAircraftTypeSelector(FilterBottomSheetState filterNotifier) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AircraftTypeSelectorSheet(
+        onSelected: (aircraftType) {
+          filterNotifier.setAircraftType(aircraftType);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   void _applyFilters(FilterBottomSheetData filterState) {
     if (filterState.hasFilters) {
       ref.read(flightFilterStateProvider.notifier).updateFilter(
@@ -312,5 +314,297 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     }
 
     Navigator.pop(context);
+  }
+}
+
+/// Airline Selector Bottom Sheet
+class _AirlineSelectorSheet extends ConsumerWidget {
+  final ValueChanged<String?> onSelected;
+
+  const _AirlineSelectorSheet({required this.onSelected});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final airlinesAsync = ref.watch(airlinesProvider);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderGray,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Title
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'Select Airline',
+              style: AppTypography.heading2,
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // List
+          Expanded(
+            child: airlinesAsync.when(
+              data: (airlines) {
+                final items = [null, ...airlines.map((a) => a.airline).where((a) => a != null && a.isNotEmpty)];
+
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderGray),
+                  itemBuilder: (context, index) {
+                    final airline = items[index];
+                    final displayName = airline ?? 'All Airlines';
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.lightBlue,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.flight,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        displayName,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      onTap: () => onSelected(airline),
+                    );
+                  },
+                );
+              },
+              loading: () => _buildShimmerList(),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 12),
+                    Text('Failed to load airlines', style: AppTypography.body),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => ref.invalidate(airlinesProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: 8,
+      itemBuilder: (context, index) => _buildShimmerItem(),
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              width: 150,
+              height: 16,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Aircraft Type Selector Bottom Sheet
+class _AircraftTypeSelectorSheet extends ConsumerWidget {
+  final ValueChanged<String?> onSelected;
+
+  const _AircraftTypeSelectorSheet({required this.onSelected});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final aircraftTypesAsync = ref.watch(aircraftTypesProvider);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderGray,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Title
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'Select Aircraft Type',
+              style: AppTypography.heading2,
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // List
+          Expanded(
+            child: aircraftTypesAsync.when(
+              data: (aircraftTypes) {
+                final items = [null, ...aircraftTypes.map((a) => a.aircraft).where((a) => a != null && a.isNotEmpty)];
+
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderGray),
+                  itemBuilder: (context, index) {
+                    final aircraft = items[index];
+                    final displayName = aircraft ?? 'All Aircraft';
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.lightBlue,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.airplanemode_active,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        displayName,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      onTap: () => onSelected(aircraft),
+                    );
+                  },
+                );
+              },
+              loading: () => _buildShimmerList(),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 12),
+                    Text('Failed to load aircraft types', style: AppTypography.body),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => ref.invalidate(aircraftTypesProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: 6,
+      itemBuilder: (context, index) => _buildShimmerItem(),
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              width: 120,
+              height: 16,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

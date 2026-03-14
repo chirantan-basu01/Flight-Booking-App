@@ -87,7 +87,7 @@ class FlightDetailsScreen extends ConsumerWidget {
                   bookingInfo: data.bookingInfo,
                 ),
 
-              const SizedBox(height: 80), // Space for FAB
+              const SizedBox(height: 120), // Space for FAB
             ],
           ),
         ),
@@ -102,7 +102,7 @@ class FlightDetailsScreen extends ConsumerWidget {
               // Passenger Cards Shimmer
               PassengerCardShimmer(),
               PassengerCardShimmer(),
-              SizedBox(height: 80),
+              SizedBox(height: 120),
             ],
           ),
         ),
