@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/home/domain/models/airport_model.dart';
@@ -24,6 +25,7 @@ class AirportSelectorBottomSheet extends ConsumerStatefulWidget {
 class _AirportSelectorBottomSheetState
     extends ConsumerState<AirportSelectorBottomSheet> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _debounceTimer;
 
   @override
@@ -33,13 +35,39 @@ class _AirportSelectorBottomSheetState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(airportSearchQueryProvider.notifier).clear();
     });
+
+    // Add scroll listener for pagination
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    final searchQuery = ref.read(airportSearchQueryProvider);
+    final search = searchQuery.isEmpty ? null : searchQuery;
+
+    if (widget.isDeparture) {
+      ref
+          .read(paginatedDepartureAirportsProvider(search: search).notifier)
+          .loadMore(search: search);
+    } else {
+      ref
+          .read(paginatedArrivalAirportsProvider(search: search).notifier)
+          .loadMore(search: search);
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -54,9 +82,11 @@ class _AirportSelectorBottomSheetState
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(airportSearchQueryProvider);
+    final search = searchQuery.isEmpty ? null : searchQuery;
+
     final airportsAsync = widget.isDeparture
-        ? ref.watch(departureAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery))
-        : ref.watch(arrivalAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
+        ? ref.watch(paginatedDepartureAirportsProvider(search: search))
+        : ref.watch(paginatedArrivalAirportsProvider(search: search));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -121,13 +151,15 @@ class _AirportSelectorBottomSheetState
           // Airport List
           Expanded(
             child: airportsAsync.when(
-              data: (airports) {
+              data: (paginatedState) {
+                final airports = paginatedState.airports;
+
                 if (airports.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.flight_outlined,
                           size: 48,
                           color: AppColors.mediumGray,
@@ -143,13 +175,19 @@ class _AirportSelectorBottomSheetState
                 }
 
                 return ListView.separated(
+                  controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: airports.length,
+                  itemCount: airports.length + (paginatedState.hasMore ? 1 : 0),
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,
                     color: AppColors.borderGray,
                   ),
                   itemBuilder: (context, index) {
+                    // Show shimmer loading at the bottom
+                    if (index >= airports.length) {
+                      return _buildAirportShimmer();
+                    }
+
                     final airport = airports[index];
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -166,7 +204,7 @@ class _AirportSelectorBottomSheetState
                         ),
                       ),
                       title: Text(
-                        '${airport.city ?? 'Unknown'}',
+                        airport.city ?? 'Unknown',
                         style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.black,
@@ -189,10 +227,10 @@ class _AirportSelectorBottomSheetState
                   },
                 );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryBlue,
-                ),
+              loading: () => ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: 6,
+                itemBuilder: (context, index) => _buildAirportShimmer(),
               ),
               error: (error, _) => Center(
                 child: Column(
@@ -212,9 +250,9 @@ class _AirportSelectorBottomSheetState
                     TextButton(
                       onPressed: () {
                         if (widget.isDeparture) {
-                          ref.invalidate(departureAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
+                          ref.invalidate(paginatedDepartureAirportsProvider(search: search));
                         } else {
-                          ref.invalidate(arrivalAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
+                          ref.invalidate(paginatedArrivalAirportsProvider(search: search));
                         }
                       },
                       child: const Text('Retry'),
@@ -225,6 +263,64 @@ class _AirportSelectorBottomSheetState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAirportShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            // Icon placeholder
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Text placeholder
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 60,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Flight count placeholder
+            Container(
+              width: 60,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

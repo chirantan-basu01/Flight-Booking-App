@@ -10,7 +10,7 @@ part 'flight_details_providers.g.dart';
 
 /// Set to true to use mock data (when API is unavailable)
 /// Set to false to use real API
-const bool useMockData = true;
+const bool useMockData = false;
 
 @riverpod
 FlightDetailsRemoteDataSource flightDetailsRemoteDataSource(
