@@ -30,20 +30,22 @@ class SavedTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double notchRadius = 10;
-    const double dividerFromBottom = 52; // Position of divider from bottom
+    const double notchRadius = 12;
+    const double cornerRadius = 18.0;
+    const double dividerFromBottom = 68;
 
     return SizedBox(
-      width: 280,
+      width: 290,
       child: CustomPaint(
         painter: _TicketPainter(
           notchRadius: notchRadius,
           dividerFromBottom: dividerFromBottom,
-          borderColor: const Color(0xFFE0E0E0),
+          cornerRadius: cornerRadius,
+          borderColor: const Color(0xFFE8E8E8),
           fillColor: AppColors.white,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -53,7 +55,7 @@ class SavedTripCard extends StatelessWidget {
                 child: Text(
                   airlineName,
                   style: AppTypography.heading3.copyWith(
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF22C55E),
                     letterSpacing: 0.3,
@@ -74,28 +76,29 @@ class SavedTripCard extends StatelessWidget {
                       children: [
                         Text(
                           departureTime,
-                          style: AppTypography.heading3.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF22C55E),
+                          style: AppTypography.caption.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF3B82F6),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text.rich(
                           TextSpan(
                             children: [
                               TextSpan(
                                 text: departureCode,
                                 style: AppTypography.heading3.copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.black,
                                 ),
                               ),
                               TextSpan(
                                 text: ' ($departureCity)',
                                 style: AppTypography.caption.copyWith(
-                                  fontSize: 10,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.mediumGray,
                                 ),
                               ),
@@ -110,21 +113,21 @@ class SavedTripCard extends StatelessWidget {
 
                   // Duration with plane icon
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       children: [
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 10,
+                              width: 12,
                               height: 1,
                               color: const Color(0xFFD0D0D0),
                             ),
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 4),
                             Container(
-                              width: 22,
-                              height: 22,
+                              width: 26,
+                              height: 26,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
@@ -135,24 +138,25 @@ class SavedTripCard extends StatelessWidget {
                               child: const Center(
                                 child: Icon(
                                   Icons.flight,
-                                  size: 11,
+                                  size: 13,
                                   color: Color(0xFF3B82F6),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 4),
                             Container(
-                              width: 10,
+                              width: 12,
                               height: 1,
                               color: const Color(0xFFD0D0D0),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
                           duration,
                           style: AppTypography.caption.copyWith(
-                            fontSize: 10,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.mediumGray,
                           ),
                         ),
@@ -168,28 +172,29 @@ class SavedTripCard extends StatelessWidget {
                       children: [
                         Text(
                           arrivalTime,
-                          style: AppTypography.heading3.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.black,
+                          style: AppTypography.caption.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF3B82F6),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text.rich(
                           TextSpan(
                             children: [
                               TextSpan(
                                 text: arrivalCode,
                                 style: AppTypography.heading3.copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.black,
                                 ),
                               ),
                               TextSpan(
                                 text: ' ($arrivalCity)',
                                 style: AppTypography.caption.copyWith(
-                                  fontSize: 10,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.mediumGray,
                                 ),
                               ),
@@ -210,7 +215,7 @@ class SavedTripCard extends StatelessWidget {
               // Dashed Divider (this aligns with the notches)
               _buildDashedDivider(),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
               // Date Row
               Row(
@@ -222,16 +227,16 @@ class SavedTripCard extends StatelessWidget {
                         Text(
                           'DATE',
                           style: AppTypography.label.copyWith(
-                            fontSize: 9,
+                            fontSize: 10,
                             color: AppColors.mediumGray,
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           date,
                           style: AppTypography.bodyMedium.copyWith(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.black,
                           ),
@@ -246,16 +251,16 @@ class SavedTripCard extends StatelessWidget {
                         Text(
                           'DATE',
                           style: AppTypography.label.copyWith(
-                            fontSize: 9,
+                            fontSize: 10,
                             color: AppColors.mediumGray,
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           date,
                           style: AppTypography.bodyMedium.copyWith(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.black,
                           ),
@@ -298,12 +303,14 @@ class SavedTripCard extends StatelessWidget {
 class _TicketPainter extends CustomPainter {
   final double notchRadius;
   final double dividerFromBottom;
+  final double cornerRadius;
   final Color borderColor;
   final Color fillColor;
 
   _TicketPainter({
     required this.notchRadius,
     required this.dividerFromBottom,
+    required this.cornerRadius,
     required this.borderColor,
     required this.fillColor,
   });
@@ -311,7 +318,6 @@ class _TicketPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final notchY = size.height - dividerFromBottom;
-    const cornerRadius = 14.0;
 
     // Create the ticket path with notches
     final path = Path();

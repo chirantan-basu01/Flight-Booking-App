@@ -17,13 +17,14 @@ class HomeScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF818CF8), // Blue-purple at top
+              Color(0xFF6366F1), // Deep indigo at top
+              Color(0xFF818CF8), // Medium indigo
               Color(0xFFA5B4FC), // Light purple
               Color(0xFFD4DBFD), // Very light lavender
               Color(0xFFEEF0FB), // Almost white
               Color(0xFFF5F5F7), // Light gray at bottom
             ],
-            stops: [0.0, 0.08, 0.15, 0.25, 0.4],
+            stops: [0.0, 0.06, 0.12, 0.20, 0.30, 0.45],
           ),
         ),
         child: SafeArea(
@@ -133,7 +134,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         // Horizontal scrollable saved trips
         SizedBox(
-          height: 165,
+          height: 195,
           child: ListView(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,

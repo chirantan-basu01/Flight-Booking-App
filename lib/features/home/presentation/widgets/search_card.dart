@@ -88,25 +88,46 @@ class SearchCard extends ConsumerWidget {
                   children: [
                     // Departure Date
                     Expanded(
-                      child: _buildDateField(
-                        label: 'Departure',
-                        date: searchState.departureDate,
-                        onTap: () => _showDatePicker(context, ref),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDateField(
+                            label: 'Departure',
+                            date: searchState.departureDate,
+                            onTap: () => _showDatePicker(context, ref),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            margin: const EdgeInsets.only(right: 16),
+                            height: 1,
+                            color: const Color(0xFFEEEEEE),
+                          ),
+                        ],
                       ),
                     ),
 
                     // Amount
                     Expanded(
-                      child: _buildPassengersField(
-                        label: 'Amount',
-                        count: searchState.passengers,
-                        onTap: () => _showPassengerSelector(context, ref),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPassengersField(
+                            label: 'Amount',
+                            count: searchState.passengers,
+                            onTap: () => _showPassengerSelector(context, ref),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 1,
+                            color: const Color(0xFFEEEEEE),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Search Button
                 SizedBox(
@@ -421,9 +442,7 @@ class _PassengerSelectorSheet extends ConsumerWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.black,
                 foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                shape: const StadiumBorder(),
               ),
               child: Text('Confirm', style: AppTypography.button),
             ),
