@@ -50,3 +50,37 @@ Future<List<AirportModel>> arrivalAirports(
     (airports) => airports,
   );
 }
+
+/// Airport search query state
+@riverpod
+class AirportSearchQuery extends _$AirportSearchQuery {
+  @override
+  String build() => '';
+
+  void updateQuery(String query) {
+    state = query;
+  }
+
+  void clear() {
+    state = '';
+  }
+}
+
+/// Passenger selector count state (for bottom sheet)
+@riverpod
+class PassengerSelectorCount extends _$PassengerSelectorCount {
+  @override
+  int build() => 1;
+
+  void setCount(int count) {
+    state = count;
+  }
+
+  void increment() {
+    if (state < 9) state = state + 1;
+  }
+
+  void decrement() {
+    if (state > 1) state = state - 1;
+  }
+}

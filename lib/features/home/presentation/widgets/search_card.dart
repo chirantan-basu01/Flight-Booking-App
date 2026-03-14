@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flight_booking_app/core/constants/app_colors.dart';
 import 'package:flight_booking_app/core/theme/app_typography.dart';
 import 'package:flight_booking_app/features/home/presentation/providers/search_state_provider.dart';
+import 'package:flight_booking_app/features/home/presentation/providers/home_providers.dart';
 import 'package:flight_booking_app/features/home/presentation/widgets/airport_selector_bottom_sheet.dart';
 import 'package:flight_booking_app/routes/app_router.dart';
 
@@ -344,47 +345,27 @@ class SearchCard extends ConsumerWidget {
 
   void _showPassengerSelector(BuildContext context, WidgetRef ref) {
     final currentCount = ref.read(searchStateNotifierProvider).passengers;
+    // Initialize the passenger selector with current count
+    ref.read(passengerSelectorCountProvider.notifier).setCount(currentCount);
 
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _PassengerSelectorSheet(
-        currentCount: currentCount,
-        onSelected: (count) {
-          ref.read(searchStateNotifierProvider.notifier).updatePassengers(count);
-          Navigator.pop(context);
-        },
-      ),
+      builder: (context) => const _PassengerSelectorSheet(),
     );
   }
 }
 
-class _PassengerSelectorSheet extends StatefulWidget {
-  final int currentCount;
-  final ValueChanged<int> onSelected;
-
-  const _PassengerSelectorSheet({
-    required this.currentCount,
-    required this.onSelected,
-  });
+class _PassengerSelectorSheet extends ConsumerWidget {
+  const _PassengerSelectorSheet();
 
   @override
-  State<_PassengerSelectorSheet> createState() => _PassengerSelectorSheetState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(passengerSelectorCountProvider);
+    final countNotifier = ref.read(passengerSelectorCountProvider.notifier);
 
-class _PassengerSelectorSheetState extends State<_PassengerSelectorSheet> {
-  late int _count;
-
-  @override
-  void initState() {
-    super.initState();
-    _count = widget.currentCount;
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -409,23 +390,23 @@ class _PassengerSelectorSheetState extends State<_PassengerSelectorSheet> {
             children: [
               _buildCounterButton(
                 icon: Icons.remove,
-                onPressed: _count > 1 ? () => setState(() => _count--) : null,
+                onPressed: count > 1 ? countNotifier.decrement : null,
               ),
               const SizedBox(width: 40),
               Text(
-                '$_count',
+                '$count',
                 style: AppTypography.heading1.copyWith(fontSize: 48),
               ),
               const SizedBox(width: 40),
               _buildCounterButton(
                 icon: Icons.add,
-                onPressed: _count < 9 ? () => setState(() => _count++) : null,
+                onPressed: count < 9 ? countNotifier.increment : null,
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            '$_count ${_count == 1 ? 'person' : 'people'}',
+            '$count ${count == 1 ? 'person' : 'people'}',
             style: AppTypography.body,
           ),
           const SizedBox(height: 32),
@@ -433,7 +414,10 @@ class _PassengerSelectorSheetState extends State<_PassengerSelectorSheet> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: () => widget.onSelected(_count),
+              onPressed: () {
+                ref.read(searchStateNotifierProvider.notifier).updatePassengers(count);
+                Navigator.pop(context);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.black,
                 foregroundColor: AppColors.white,

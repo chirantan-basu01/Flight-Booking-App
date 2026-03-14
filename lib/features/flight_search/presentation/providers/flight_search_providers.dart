@@ -58,6 +58,87 @@ class FlightFilterState extends _$FlightFilterState {
   }
 }
 
+/// Temporary filter state for bottom sheet editing
+@riverpod
+class FilterBottomSheetState extends _$FilterBottomSheetState {
+  @override
+  FilterBottomSheetData build() => const FilterBottomSheetData();
+
+  void setAirline(String? airline) {
+    state = state.copyWith(selectedAirline: airline);
+  }
+
+  void setStops(int? stops) {
+    state = state.copyWith(selectedStops: stops);
+  }
+
+  void setAircraftType(String? aircraftType) {
+    state = state.copyWith(selectedAircraftType: aircraftType);
+  }
+
+  void setPriceRange(double min, double max) {
+    state = state.copyWith(priceMin: min, priceMax: max);
+  }
+
+  void reset() {
+    state = const FilterBottomSheetData();
+  }
+
+  void loadFromFilter(FilterModel? filter) {
+    if (filter != null) {
+      state = FilterBottomSheetData(
+        selectedAirline: filter.airline,
+        selectedStops: filter.stops,
+        selectedAircraftType: filter.aircraftType,
+        priceMin: filter.priceMin ?? 0,
+        priceMax: filter.priceMax ?? 1000,
+      );
+    } else {
+      state = const FilterBottomSheetData();
+    }
+  }
+}
+
+/// Data class for filter bottom sheet state
+class FilterBottomSheetData {
+  final String? selectedAirline;
+  final int? selectedStops;
+  final String? selectedAircraftType;
+  final double priceMin;
+  final double priceMax;
+
+  const FilterBottomSheetData({
+    this.selectedAirline,
+    this.selectedStops,
+    this.selectedAircraftType,
+    this.priceMin = 0,
+    this.priceMax = 1000,
+  });
+
+  FilterBottomSheetData copyWith({
+    String? selectedAirline,
+    int? selectedStops,
+    String? selectedAircraftType,
+    double? priceMin,
+    double? priceMax,
+  }) {
+    return FilterBottomSheetData(
+      selectedAirline: selectedAirline ?? this.selectedAirline,
+      selectedStops: selectedStops ?? this.selectedStops,
+      selectedAircraftType: selectedAircraftType ?? this.selectedAircraftType,
+      priceMin: priceMin ?? this.priceMin,
+      priceMax: priceMax ?? this.priceMax,
+    );
+  }
+
+  bool get hasFilters =>
+      selectedAirline != null ||
+      selectedStops != null ||
+      selectedAircraftType != null ||
+      priceMin > 0 ||
+      priceMax < 1000;
+}
+
 /// Search flights based on search state, sort, and filters
 @riverpod
 Future<List<FlightModel>> flightSearchResults(

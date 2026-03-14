@@ -13,11 +13,6 @@ class FilterBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
-  String? _selectedAirline;
-  int? _selectedStops;
-  String? _selectedAircraftType;
-  RangeValues _priceRange = const RangeValues(0, 1000);
-
   final List<String> _airlines = [
     'All Airlines',
     'Garuda Indonesia',
@@ -42,23 +37,18 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   @override
   void initState() {
     super.initState();
-    // Load current filters
-    final currentFilters = ref.read(flightFilterStateProvider);
-    if (currentFilters != null) {
-      _selectedAirline = currentFilters.airline;
-      _selectedStops = currentFilters.stops;
-      _selectedAircraftType = currentFilters.aircraftType;
-      if (currentFilters.priceMin != null && currentFilters.priceMax != null) {
-        _priceRange = RangeValues(
-          currentFilters.priceMin!,
-          currentFilters.priceMax!,
-        );
-      }
-    }
+    // Load current filters into bottom sheet state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentFilters = ref.read(flightFilterStateProvider);
+      ref.read(filterBottomSheetStateProvider.notifier).loadFromFilter(currentFilters);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final filterState = ref.watch(filterBottomSheetStateProvider);
+    final filterNotifier = ref.read(filterBottomSheetStateProvider.notifier);
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: const BoxDecoration(
@@ -91,7 +81,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   style: AppTypography.heading2,
                 ),
                 TextButton(
-                  onPressed: _resetFilters,
+                  onPressed: filterNotifier.reset,
                   child: Text(
                     'Reset',
                     style: AppTypography.body.copyWith(
@@ -117,12 +107,10 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   _buildSectionTitle('Airline'),
                   const SizedBox(height: 12),
                   _buildDropdown(
-                    value: _selectedAirline ?? 'All Airlines',
+                    value: filterState.selectedAirline ?? 'All Airlines',
                     items: _airlines,
                     onChanged: (value) {
-                      setState(() {
-                        _selectedAirline = value == 'All Airlines' ? null : value;
-                      });
+                      filterNotifier.setAirline(value == 'All Airlines' ? null : value);
                     },
                   ),
 
@@ -133,13 +121,13 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _buildStopOption(null, 'Any'),
+                      _buildStopOption(null, 'Any', filterState.selectedStops, filterNotifier),
                       const SizedBox(width: 8),
-                      _buildStopOption(0, 'Direct'),
+                      _buildStopOption(0, 'Direct', filterState.selectedStops, filterNotifier),
                       const SizedBox(width: 8),
-                      _buildStopOption(1, '1 Stop'),
+                      _buildStopOption(1, '1 Stop', filterState.selectedStops, filterNotifier),
                       const SizedBox(width: 8),
-                      _buildStopOption(2, '2+ Stops'),
+                      _buildStopOption(2, '2+ Stops', filterState.selectedStops, filterNotifier),
                     ],
                   ),
 
@@ -152,26 +140,24 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${_priceRange.start.toInt()}',
+                        '\$${filterState.priceMin.toInt()}',
                         style: AppTypography.bodyMedium,
                       ),
                       Text(
-                        '\$${_priceRange.end.toInt()}',
+                        '\$${filterState.priceMax.toInt()}',
                         style: AppTypography.bodyMedium,
                       ),
                     ],
                   ),
                   RangeSlider(
-                    values: _priceRange,
+                    values: RangeValues(filterState.priceMin, filterState.priceMax),
                     min: 0,
                     max: 1000,
                     divisions: 20,
                     activeColor: AppColors.primaryBlue,
                     inactiveColor: AppColors.borderGray,
                     onChanged: (values) {
-                      setState(() {
-                        _priceRange = values;
-                      });
+                      filterNotifier.setPriceRange(values.start, values.end);
                     },
                   ),
 
@@ -181,12 +167,10 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   _buildSectionTitle('Aircraft Type'),
                   const SizedBox(height: 12),
                   _buildDropdown(
-                    value: _selectedAircraftType ?? 'All Aircraft',
+                    value: filterState.selectedAircraftType ?? 'All Aircraft',
                     items: _aircraftTypes,
                     onChanged: (value) {
-                      setState(() {
-                        _selectedAircraftType = value == 'All Aircraft' ? null : value;
-                      });
+                      filterNotifier.setAircraftType(value == 'All Aircraft' ? null : value);
                     },
                   ),
                 ],
@@ -212,7 +196,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _applyFilters,
+                  onPressed: () => _applyFilters(filterState),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.black,
                     foregroundColor: AppColors.white,
@@ -278,15 +262,16 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
-  Widget _buildStopOption(int? stops, String label) {
-    final isSelected = _selectedStops == stops;
+  Widget _buildStopOption(
+    int? stops,
+    String label,
+    int? selectedStops,
+    FilterBottomSheetState notifier,
+  ) {
+    final isSelected = selectedStops == stops;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedStops = stops;
-          });
-        },
+        onTap: () => notifier.setStops(stops),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -311,31 +296,15 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     );
   }
 
-  void _resetFilters() {
-    setState(() {
-      _selectedAirline = null;
-      _selectedStops = null;
-      _selectedAircraftType = null;
-      _priceRange = const RangeValues(0, 1000);
-    });
-  }
-
-  void _applyFilters() {
-    // Check if any filters are actually set
-    final hasFilters = _selectedAirline != null ||
-        _selectedStops != null ||
-        _selectedAircraftType != null ||
-        _priceRange.start > 0 ||
-        _priceRange.end < 1000;
-
-    if (hasFilters) {
+  void _applyFilters(FilterBottomSheetData filterState) {
+    if (filterState.hasFilters) {
       ref.read(flightFilterStateProvider.notifier).updateFilter(
             FilterModel(
-              airline: _selectedAirline,
-              stops: _selectedStops,
-              aircraftType: _selectedAircraftType,
-              priceMin: _priceRange.start > 0 ? _priceRange.start : null,
-              priceMax: _priceRange.end < 1000 ? _priceRange.end : null,
+              airline: filterState.selectedAirline,
+              stops: filterState.selectedStops,
+              aircraftType: filterState.selectedAircraftType,
+              priceMin: filterState.priceMin > 0 ? filterState.priceMin : null,
+              priceMax: filterState.priceMax < 1000 ? filterState.priceMax : null,
             ),
           );
     } else {

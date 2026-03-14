@@ -25,7 +25,15 @@ class _AirportSelectorBottomSheetState
     extends ConsumerState<AirportSelectorBottomSheet> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
-  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear search query when opening
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(airportSearchQueryProvider.notifier).clear();
+    });
+  }
 
   @override
   void dispose() {
@@ -38,18 +46,17 @@ class _AirportSelectorBottomSheetState
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 400), () {
       if (mounted) {
-        setState(() {
-          _searchQuery = query;
-        });
+        ref.read(airportSearchQueryProvider.notifier).updateQuery(query);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final searchQuery = ref.watch(airportSearchQueryProvider);
     final airportsAsync = widget.isDeparture
-        ? ref.watch(departureAirportsProvider(search: _searchQuery))
-        : ref.watch(arrivalAirportsProvider(search: _searchQuery));
+        ? ref.watch(departureAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery))
+        : ref.watch(arrivalAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -205,9 +212,9 @@ class _AirportSelectorBottomSheetState
                     TextButton(
                       onPressed: () {
                         if (widget.isDeparture) {
-                          ref.invalidate(departureAirportsProvider(search: _searchQuery));
+                          ref.invalidate(departureAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
                         } else {
-                          ref.invalidate(arrivalAirportsProvider(search: _searchQuery));
+                          ref.invalidate(arrivalAirportsProvider(search: searchQuery.isEmpty ? null : searchQuery));
                         }
                       },
                       child: const Text('Retry'),
